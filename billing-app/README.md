@@ -38,6 +38,7 @@ pip install -r requirements.txt
 docker exec -it inventory psql -U postgres
 CREATE DATABASE billing_db;
 \q
+python run.py
 ```
 5. Run the RabbitMQ consumer:
 ```bash
