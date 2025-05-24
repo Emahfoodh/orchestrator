@@ -1,0 +1,339 @@
+openapi: 3.0.3
+info:
+  title: CRUD Master API Gateway
+  description: |
+    API Gateway for the CRUD Master movie streaming platform microservices architecture.
+    Routes requests to the appropriate services using HTTP and RabbitMQ protocols.
+    
+    ## Architecture
+    - **Inventory API**: Manages movie catalog via HTTP
+    - **Billing API**: Processes payments via RabbitMQ message queue
+    
+  version: 1.0.0
+  contact:
+    name: CRUD Master API Support
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:5000
+    description: Development server (API Gateway)
+  - url: http://192.168.56.10:5000
+    description: Vagrant VM server
+
+paths:
+  /api/movies:
+    get:
+      summary: Get all movies
+      description: Retrieve all movies from the inventory or filter by title
+      tags:
+        - Movies
+      parameters:
+        - name: title
+          in: query
+          description: Filter movies by title (case-insensitive partial match)
+          required: false
+          schema:
+            type: string
+            example: "matrix"
+      responses:
+        '200':
+          description: List of movies retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Movie'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      summary: Create a new movie
+      description: Add a new movie to the inventory
+      tags:
+        - Movies
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MovieInput'
+      responses:
+        '201':
+          description: Movie created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Movie'
+        '400':
+          description: Invalid input data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      summary: Delete all movies
+      description: Remove all movies from the inventory database
+      tags:
+        - Movies
+      responses:
+        '200':
+          description: All movies deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "All movies deleted successfully"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/movies/{id}:
+    get:
+      summary: Get movie by ID
+      description: Retrieve a specific movie by its unique identifier
+      tags:
+        - Movies
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique identifier of the movie
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Movie retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Movie'
+        '404':
+          description: Movie not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      summary: Update movie by ID
+      description: Update an existing movie's information
+      tags:
+        - Movies
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique identifier of the movie to update
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MovieInput'
+      responses:
+        '200':
+          description: Movie updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Movie'
+        '400':
+          description: Invalid input data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Movie not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      summary: Delete movie by ID
+      description: Remove a specific movie from the inventory
+      tags:
+        - Movies
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique identifier of the movie to delete
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Movie deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Movie deleted successfully"
+        '404':
+          description: Movie not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/billing:
+    post:
+      summary: Process billing order
+      description: |
+        Submit a billing order that will be processed asynchronously via RabbitMQ.
+        The order is queued even if the billing service is temporarily unavailable.
+      tags:
+        - Billing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BillingOrder'
+      responses:
+        '200':
+          description: Billing message queued successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Message posted"
+        '400':
+          description: Invalid billing data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    Movie:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the movie
+          example: 1
+        title:
+          type: string
+          description: Title of the movie
+          example: "The Matrix"
+        description:
+          type: string
+          description: Description of the movie
+          example: "A computer programmer discovers reality as he knows it is a simulation."
+      required:
+        - id
+        - title
+        - description
+
+    MovieInput:
+      type: object
+      properties:
+        title:
+          type: string
+          description: Title of the movie
+          example: "The Matrix"
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+          description: Description of the movie
+          example: "A computer programmer discovers reality as he knows it is a simulation."
+          maxLength: 1000
+      required:
+        - title
+        - description
+
+    BillingOrder:
+      type: object
+      properties:
+        user_id:
+          type: string
+          description: Unique identifier of the user placing the order
+          example: "3"
+        number_of_items:
+          type: string
+          description: Number of items in the order
+          example: "5"
+        total_amount:
+          type: string
+          description: Total cost of the order
+          example: "180"
+      required:
+        - user_id
+        - number_of_items
+        - total_amount
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message describing what went wrong
+          example: "Movie not found"
+        status:
+          type: integer
+          description: HTTP status code
+          example: 404
+
+tags:
+  - name: Movies
+    description: Operations related to movie inventory management
+  - name: Billing
+    description: Operations related to billing and payment processing

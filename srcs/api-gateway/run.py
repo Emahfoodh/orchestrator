@@ -8,4 +8,4 @@ if __name__ == '__main__':
     print(f"Routing inventory requests to: {Config.INVENTORY_API_URL}")
     print(f"Routing billing requests to RabbitMQ queue: {Config.RABBITMQ_QUEUE}")
     
-    app.run(host='0.0.0.0', port=Config.API_GATEWAY_PORT)
+    app.run(host='0.0.0.0', port=Config.API_GATEWAY_PORT, debug=True)
