@@ -1,0 +1,1 @@
+from app.routes.inventory import inventory_bp
