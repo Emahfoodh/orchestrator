@@ -6,13 +6,18 @@ load_dotenv()
 
 class Config:
     """Base configuration class."""
-    DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', 't', '1')
+    # Debug mode from environment
+    DEBUG = os.getenv('DEBUG', 'False').lower() in ['true', '1', 'yes']
+
+    # Database configuration from environment variables
     SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URI', 'postgresql://postgres:postgres@localhost:5432/billing_db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+    # Server configuration
+    HOST = os.getenv('HOST', '0.0.0.0')
     PORT = int(os.getenv('PORT', 8081))
-    HOST = os.getenv('HOST', 'localhost')
     
-    # RabbitMQ configuration
+    # RabbitMQ configuration from environment variables
     RABBITMQ_HOST = os.getenv('RABBITMQ_HOST', 'localhost')
     RABBITMQ_PORT = int(os.getenv('RABBITMQ_PORT', 5672))
     RABBITMQ_USER = os.getenv('RABBITMQ_USER', 'guest')

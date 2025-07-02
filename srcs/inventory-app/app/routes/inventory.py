@@ -36,6 +36,9 @@ def create_movie():
     if 'title' not in data:
         return jsonify({"message": "Missing required field: title"}), 400
     
+    if 'description' not in data or not data['description']:
+        return jsonify({"message": "Missing required field: description"}), 400
+
     movie = Movie.from_dict(data)
     
     db.session.add(movie)

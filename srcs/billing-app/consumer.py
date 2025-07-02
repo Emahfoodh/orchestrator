@@ -3,7 +3,6 @@ import pika
 import sys
 import time
 import logging
-from flask import Flask
 from app import create_app
 from app.models import db, Order
 from app.config import Config
