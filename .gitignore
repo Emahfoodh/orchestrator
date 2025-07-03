@@ -1,35 +1,229 @@
-# Virtual Environment
-venv/
-env/
-ENV/
+# CRUD Master - Comprehensive .gitignore
 
-# Python bytecode
+# ==============================================
+# Python
+# ==============================================
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
 
-# Distribution / packaging
-dist/
-build/
-*.egg-info/
+# C extensions
+*.so
 
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+#  Usually these files are written by a python script from a template
+#  before PyInstaller builds the exe, so as to inject date/other infos into it.
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
+#   However, in case of collaboration, if having platform-specific dependencies or dependencies
+#   having no cross-platform support, pipenv may install dependencies that don't work, or not
+#   install all needed dependencies.
+#Pipfile.lock
+
+# PEP 582; used by e.g. github.com/David-OConnor/pyflow
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# ==============================================
+# Environment Variables & Configuration
+# ==============================================
 # Environment variables
 .env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
-# IDE files
-.idea/
-.vscode/
-*.swp
-*.swo
+# Docker environment files
+.env.docker
+.env.compose
 
-# Logs
-*.log
+# ==============================================
+# Virtual Environments
+# ==============================================
+# Virtual Environment
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+.ENV/
 
-# Database files
+# Conda environments
+.conda/
+
+# ==============================================
+# Vagrant
+# ==============================================
+# Vagrant
+.vagrant/
+.vagrant.d/
+*.vagrant
+
+# VirtualBox VMs
+*.vbox
+*.vbox-prev
+*.vdi
+*.vmdk
+
+# Vagrant boxes
+*.box
+
+# Vagrant plugins
+.vagrant-plugins
+
+# ==============================================
+# Docker
+# ==============================================
+# Docker
+.dockerignore
+docker-compose.override.yml
+docker-compose.override.yaml
+
+# Docker volumes and data
+docker-data/
+postgres-data/
+mongodb-data/
+redis-data/
+
+# Docker build context
+.docker/
+
+# ==============================================
+# Database Files
+# ==============================================
+# SQLite databases
 *.db
+*.sqlite
 *.sqlite3
 
-# OS generated files
+# Database dumps
+*.sql
+*.dump
+
+# Database logs
+*.log
+*.err
+
+# ==============================================
+# IDE and Editor Files
+# ==============================================
+# VSCode
+.vscode/
+*.code-workspace
+
+# PyCharm
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# ==============================================
+# Operating System Files
+# ==============================================
+# macOS
 .DS_Store
 .DS_Store?
 ._*
@@ -37,3 +231,173 @@ build/
 .Trashes
 ehthumbs.db
 Thumbs.db
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ==============================================
+# Logs and Temporary Files
+# ==============================================
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Temporary files
+tmp/
+temp/
+.tmp/
+.temp/
+
+# ==============================================
+# API Testing and Documentation
+# ==============================================
+# Postman
+*.postman_collection.json
+*.postman_environment.json
+
+# Insomnia
+.insomnia/
+
+# ==============================================
+# Security and Sensitive Data
+# ==============================================
+# SSL certificates
+*.pem
+*.key
+*.crt
+*.csr
+*.p12
+*.pfx
+
+# SSH keys
+id_rsa
+id_rsa.pub
+id_dsa
+id_dsa.pub
+id_ecdsa
+id_ecdsa.pub
+id_ed25519
+id_ed25519.pub
+
+# GPG keys
+*.gpg
+*.pgp
+
+# API keys and secrets
+secrets.json
+credentials.json
+serviceAccountKey.json
+
+# ==============================================
+# Project Specific
+# ==============================================
+# Test results and reports
+test-results/
+test-reports/
+coverage-reports/
+
+# Build artifacts
+build/
+dist/
+artifacts/
+
+# Node modules (if any frontend components added later)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Backup files
+*.backup
+*.bak
+*.orig
+
+# Cache directories
+.cache/
+.npm/
+.eslintcache
+
+# ==============================================
+# Monitoring and Observability
+# ==============================================
+# Prometheus data
+prometheus-data/
+
+# Grafana data
+grafana-data/
+
+# ELK Stack data
+elasticsearch-data/
+logstash-data/
+kibana-data/
+
+# ==============================================
+# Development Tools
+# ==============================================
+# Jupyter
+.ipynb_checkpoints/
+
+# Python tools
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Black formatter
+.black/
+
+# isort
+.isort.cfg
+
+# ==============================================
+# Documentation Build
+# ==============================================
+# MkDocs
+site/
+
+# Sphinx
+docs/_build/
+
+# ==============================================
+# Custom Project Files
+# ==============================================
+# Custom ignore patterns for this project
+# Add any project-specific files or directories to ignore
+
+# Local development overrides
+docker-compose.local.yml
+local-config/
+
+# Generated documentation
+generated-docs/
+
+# Performance test results
+performance-results/
+
+# Local scripts that shouldn't be committed
+local-scripts/

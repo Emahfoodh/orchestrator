@@ -1,0 +1,601 @@
+openapi: 3.0.3
+info:
+  title: CRUD Master - Microservices API
+  description: |
+    A movie streaming platform built with microservices architecture, featuring an API Gateway, Inventory API, and Billing API.
+    
+    ## Architecture
+    
+    The system consists of three main services:
+    - **API Gateway** (Port 5000) - Routes requests to appropriate microservices
+    - **Inventory Service** (Port 8080) - Manages movie inventory with full CRUD operations
+    - **Billing Service** (Port 8081) - Processes billing requests through message queues
+    
+    ## Usage
+    
+    All client requests should go through the API Gateway at `http://localhost:5000` for production use.
+    Direct service access is available for testing and administration purposes.
+  version: 1.0.0
+  contact:
+    name: CRUD Master API
+    url: https://github.com/your-repo/crud-master
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:5000
+    description: API Gateway (Production endpoint)
+  - url: http://localhost:8080
+    description: Inventory Service (Direct access)
+  - url: http://localhost:8081
+    description: Billing Service (Direct access)
+
+tags:
+  - name: movies
+    description: Movie inventory management operations
+  - name: billing
+    description: Billing and order processing operations
+  - name: health
+    description: Service health and monitoring
+
+paths:
+  /api/movies:
+    get:
+      tags:
+        - movies
+      summary: Get all movies
+      description: |
+        Retrieve all movies from the inventory. Optionally filter by title using the query parameter.
+        
+        **Available through:**
+        - API Gateway: `GET http://localhost:5000/api/movies`
+        - Direct: `GET http://localhost:8080/api/movies`
+      parameters:
+        - in: query
+          name: title
+          schema:
+            type: string
+          description: Filter movies by title (case-insensitive partial match)
+          example: "Matrix"
+      responses:
+        '200':
+          description: List of movies retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Movie'
+              examples:
+                empty_list:
+                  summary: Empty movie list
+                  value: []
+                movies_list:
+                  summary: List with movies
+                  value:
+                    - id: 1
+                      title: "The Matrix"
+                      description: "A sci-fi classic about reality and simulation"
+                    - id: 2
+                      title: "Inception"
+                      description: "A mind-bending thriller about dreams within dreams"
+                filtered_list:
+                  summary: Filtered by title
+                  value:
+                    - id: 1
+                      title: "The Matrix"
+                      description: "A sci-fi classic about reality and simulation"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - movies
+      summary: Create a new movie
+      description: |
+        Add a new movie to the inventory.
+        
+        **Available through:**
+        - API Gateway: `POST http://localhost:5000/api/movies`
+        - Direct: `POST http://localhost:8080/api/movies`
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MovieCreate'
+            examples:
+              matrix:
+                summary: The Matrix
+                value:
+                  title: "The Matrix"
+                  description: "A sci-fi classic about reality and simulation"
+              inception:
+                summary: Inception
+                value:
+                  title: "Inception"
+                  description: "A mind-bending thriller about dreams within dreams"
+      responses:
+        '201':
+          description: Movie created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Movie'
+              example:
+                id: 1
+                title: "The Matrix"
+                description: "A sci-fi classic about reality and simulation"
+        '400':
+          description: Invalid input data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                missing_title:
+                  summary: Missing title
+                  value:
+                    message: "Missing required field: title"
+                missing_description:
+                  summary: Missing description
+                  value:
+                    message: "Missing required field: description"
+
+    delete:
+      tags:
+        - movies
+      summary: Delete all movies
+      description: |
+        Remove all movies from the inventory. Use with caution!
+        
+        **Available through:**
+        - API Gateway: `DELETE http://localhost:5000/api/movies`
+        - Direct: `DELETE http://localhost:8080/api/movies`
+      responses:
+        '200':
+          description: All movies deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "All movies have been deleted"
+
+  /api/movies/{id}:
+    get:
+      tags:
+        - movies
+      summary: Get movie by ID
+      description: |
+        Retrieve a specific movie by its ID.
+        
+        **Available through:**
+        - API Gateway: `GET http://localhost:5000/api/movies/{id}`
+        - Direct: `GET http://localhost:8080/api/movies/{id}`
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          description: Movie ID
+          example: 1
+      responses:
+        '200':
+          description: Movie retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Movie'
+              example:
+                id: 1
+                title: "The Matrix"
+                description: "A sci-fi classic about reality and simulation"
+        '404':
+          description: Movie not found
+          content:
+            text/html:
+              schema:
+                type: string
+              example: "<!doctype html><html><title>404 Not Found</title><h1>Not Found</h1></html>"
+
+    put:
+      tags:
+        - movies
+      summary: Update movie by ID
+      description: |
+        Update an existing movie's information.
+        
+        **Available through:**
+        - API Gateway: `PUT http://localhost:5000/api/movies/{id}`
+        - Direct: `PUT http://localhost:8080/api/movies/{id}`
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          description: Movie ID
+          example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MovieUpdate'
+            examples:
+              update_title:
+                summary: Update title only
+                value:
+                  title: "The Matrix Reloaded"
+              update_both:
+                summary: Update title and description
+                value:
+                  title: "The Matrix Reloaded"
+                  description: "The sequel to The Matrix"
+      responses:
+        '200':
+          description: Movie updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Movie'
+              example:
+                id: 1
+                title: "The Matrix Reloaded"
+                description: "The sequel to The Matrix"
+        '404':
+          description: Movie not found
+          content:
+            text/html:
+              schema:
+                type: string
+
+    delete:
+      tags:
+        - movies
+      summary: Delete movie by ID
+      description: |
+        Remove a specific movie from the inventory.
+        
+        **Available through:**
+        - API Gateway: `DELETE http://localhost:5000/api/movies/{id}`
+        - Direct: `DELETE http://localhost:8080/api/movies/{id}`
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          description: Movie ID
+          example: 1
+      responses:
+        '200':
+          description: Movie deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Movie with id 1 has been deleted"
+        '404':
+          description: Movie not found
+          content:
+            text/html:
+              schema:
+                type: string
+
+  /api/billing:
+    post:
+      tags:
+        - billing
+      summary: Submit billing request
+      description: |
+        Submit a billing request to be processed asynchronously through the message queue system.
+        
+        **Only available through API Gateway:** `POST http://localhost:5000/api/billing`
+        
+        The request is validated and then sent to RabbitMQ for processing by the billing service.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BillingRequest'
+            examples:
+              standard_order:
+                summary: Standard billing request
+                value:
+                  user_id: "123"
+                  number_of_items: "5"
+                  total_amount: "99.99"
+              large_order:
+                summary: Large order
+                value:
+                  user_id: "456"
+                  number_of_items: "10"
+                  total_amount: "199.99"
+      responses:
+        '200':
+          description: Billing request submitted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Message posted to billing queue"
+        '400':
+          description: Invalid billing request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                missing_user_id:
+                  summary: Missing user ID
+                  value:
+                    error: "Missing required field: user_id"
+                missing_items:
+                  summary: Missing number of items
+                  value:
+                    error: "Missing required field: number_of_items"
+                missing_amount:
+                  summary: Missing total amount
+                  value:
+                    error: "Missing required field: total_amount"
+        '500':
+          description: Internal server error (e.g., RabbitMQ connection failure)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/orders:
+    get:
+      tags:
+        - billing
+      summary: Get all processed orders
+      description: |
+        Retrieve all processed billing orders from the database.
+        
+        **Only available through direct access:** `GET http://localhost:8081/api/orders`
+        
+        This endpoint is for administrative purposes and shows all orders that have been processed by the billing consumer.
+      responses:
+        '200':
+          description: List of processed orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Order'
+              examples:
+                empty_orders:
+                  summary: No orders yet
+                  value: []
+                processed_orders:
+                  summary: List of processed orders
+                  value:
+                    - id: 1
+                      user_id: "123"
+                      number_of_items: 5
+                      total_amount: 99.99
+                    - id: 2
+                      user_id: "456"
+                      number_of_items: 3
+                      total_amount: 59.99
+
+  /api/orders/{id}:
+    get:
+      tags:
+        - billing
+      summary: Get order by ID
+      description: |
+        Retrieve a specific processed order by its ID.
+        
+        **Only available through direct access:** `GET http://localhost:8081/api/orders/{id}`
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          description: Order ID
+          example: 1
+      responses:
+        '200':
+          description: Order retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+              example:
+                id: 1
+                user_id: "123"
+                number_of_items: 5
+                total_amount: 99.99
+        '404':
+          description: Order not found
+          content:
+            text/html:
+              schema:
+                type: string
+
+  /api/health:
+    get:
+      tags:
+        - health
+      summary: Billing service health check
+      description: |
+        Check the health status of the billing service.
+        
+        **Only available through direct access:** `GET http://localhost:8081/api/health`
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ok"
+                  message:
+                    type: string
+                    example: "Billing service is running"
+
+components:
+  schemas:
+    Movie:
+      type: object
+      required:
+        - id
+        - title
+        - description
+      properties:
+        id:
+          type: integer
+          description: Unique movie identifier
+          example: 1
+        title:
+          type: string
+          description: Movie title
+          example: "The Matrix"
+        description:
+          type: string
+          description: Movie description
+          example: "A sci-fi classic about reality and simulation"
+
+    MovieCreate:
+      type: object
+      required:
+        - title
+        - description
+      properties:
+        title:
+          type: string
+          description: Movie title
+          example: "The Matrix"
+        description:
+          type: string
+          description: Movie description
+          example: "A sci-fi classic about reality and simulation"
+
+    MovieUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+          description: Movie title
+          example: "The Matrix Reloaded"
+        description:
+          type: string
+          description: Movie description
+          example: "The sequel to The Matrix"
+
+    BillingRequest:
+      type: object
+      required:
+        - user_id
+        - number_of_items
+        - total_amount
+      properties:
+        user_id:
+          type: string
+          description: User identifier
+          example: "123"
+        number_of_items:
+          type: string
+          description: Number of items being billed
+          example: "5"
+        total_amount:
+          type: string
+          description: Total amount to be charged
+          example: "99.99"
+
+    Order:
+      type: object
+      required:
+        - id
+        - user_id
+        - number_of_items
+        - total_amount
+      properties:
+        id:
+          type: integer
+          description: Unique order identifier
+          example: 1
+        user_id:
+          type: string
+          description: User identifier
+          example: "123"
+        number_of_items:
+          type: integer
+          description: Number of items in the order
+          example: 5
+        total_amount:
+          type: number
+          format: float
+          description: Total amount charged
+          example: 99.99
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Missing required field: title"
+        message:
+          type: string
+          description: Error message (alternative field name)
+          example: "Missing required field: title"
+        details:
+          type: string
+          description: Additional error details
+          example: "Validation failed for the provided input"
+
+  examples:
+    StandardMovie:
+      summary: A standard movie entry
+      value:
+        id: 1
+        title: "The Matrix"
+        description: "A sci-fi classic about reality and simulation"
+
+    BillingRequestExample:
+      summary: Standard billing request
+      value:
+        user_id: "123"
+        number_of_items: "5"
+        total_amount: "99.99"
+
+    ProcessedOrder:
+      summary: A processed order
+      value:
+        id: 1
+        user_id: "123"
+        number_of_items: 5
+        total_amount: 99.99
+
+externalDocs:
+  description: Find more info in the project README
+  url: https://github.com/your-repo/crud-master/blob/main/README.md
