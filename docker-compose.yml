@@ -1,0 +1,127 @@
+version: '3.8'
+
+services:
+  # Inventory Database
+  inventory-db:
+    image: postgres:13-alpine
+    container_name: inventory-db
+    environment:
+      POSTGRES_DB: movies_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - inventory-db-volume:/var/lib/postgresql/data
+      - ./database/init-inventory.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - microservices-network
+    restart: on-failure
+
+  # Billing Database
+  billing-db:
+    image: postgres:13-alpine
+    container_name: billing-db
+    environment:
+      POSTGRES_DB: billing_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - billing-db-volume:/var/lib/postgresql/data
+      - ./database/init-billing.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - microservices-network
+    restart: on-failure
+
+  # RabbitMQ Message Queue
+  rabbit-queue:
+    image: rabbitmq:3-management-alpine
+    container_name: rabbit-queue
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - microservices-network
+    restart: on-failure
+
+  # Inventory Application
+  inventory-app:
+    build:
+      context: ./srcs/inventory-app
+      dockerfile: Dockerfile
+    image: inventory-app
+    container_name: inventory-app
+    environment:
+      - DATABASE_URI=postgresql://postgres:postgres@inventory-db:5432/movies_db
+      - HOST=0.0.0.0
+      - PORT=8080
+      - DEBUG=false
+    depends_on:
+      - inventory-db
+    networks:
+      - microservices-network
+    restart: on-failure
+
+  # Billing Application
+  billing-app:
+    build:
+      context: ./srcs/billing-app
+      dockerfile: Dockerfile
+    image: billing-app
+    container_name: billing-app
+    environment:
+      - DATABASE_URI=postgresql://postgres:postgres@billing-db:5432/billing_db
+      - RABBITMQ_HOST=rabbit-queue
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASSWORD=guest
+      - RABBITMQ_QUEUE=billing_queue
+      - HOST=0.0.0.0
+      - PORT=8080
+      - DEBUG=false
+    depends_on:
+      - billing-db
+      - rabbit-queue
+    networks:
+      - microservices-network
+    restart: on-failure
+
+  # API Gateway
+  api-gateway-app:
+    build:
+      context: ./srcs/api-gateway
+      dockerfile: Dockerfile
+    image: api-gateway-app
+    container_name: api-gateway-app
+    environment:
+      - INVENTORY_API_URL=http://inventory-app:8080
+      - BILLING_API_URL=http://billing-app:8080
+      - RABBITMQ_HOST=rabbit-queue
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASSWORD=guest
+      - RABBITMQ_QUEUE=billing_queue
+      - HOST=0.0.0.0
+      - PORT=3000
+      - DEBUG=false
+    ports:
+      - "3000:3000"
+    depends_on:
+      - inventory-app
+      - billing-app
+      - rabbit-queue
+    volumes:
+      - api-gateway-volume:/app/logs
+    networks:
+      - microservices-network
+    restart: on-failure
+
+volumes:
+  inventory-db-volume:
+    driver: local
+  billing-db-volume:
+    driver: local
+  api-gateway-volume:
+    driver: local
+
+networks:
+  microservices-network:
+    driver: bridge

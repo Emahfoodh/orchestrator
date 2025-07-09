@@ -1,7 +1,7 @@
 from flask import Flask
 from app.config import Config
 from app.models import db
-from app.routes import billing_bp
+from app.routes import billing_bp, health_bp
 
 def create_app(config_class=Config):
     """Create and configure the Flask application."""
@@ -13,6 +13,8 @@ def create_app(config_class=Config):
     
     # Register blueprints
     app.register_blueprint(billing_bp, url_prefix='/api')
+    app.register_blueprint(health_bp)
+
     
     # Create database tables
     with app.app_context():

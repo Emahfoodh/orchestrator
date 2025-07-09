@@ -7,8 +7,10 @@ def create_app():
     CORS(app)
     
     # Register routes
-    from app.routes import inventory_proxy, billing_proxy
+    from app.routes import inventory_proxy, billing_proxy, health_bp
+
     app.register_blueprint(inventory_proxy.bp)
     app.register_blueprint(billing_proxy.bp)
+    app.register_blueprint(health_bp)
     
     return app
