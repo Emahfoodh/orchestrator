@@ -6,41 +6,59 @@ services:
     image: postgres:13-alpine
     container_name: inventory-db
     environment:
-      POSTGRES_DB: movies_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ${INVENTORY_DB_NAME:-movies_db}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     volumes:
       - inventory-db-volume:/var/lib/postgresql/data
-      - ./database/init-inventory.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - microservices-network
-    restart: on-failure
+    restart: unless-stopped
+    # Simplified health check for database
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # Billing Database
   billing-db:
     image: postgres:13-alpine
     container_name: billing-db
     environment:
-      POSTGRES_DB: billing_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ${BILLING_DB_NAME:-billing_db}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     volumes:
       - billing-db-volume:/var/lib/postgresql/data
-      - ./database/init-billing.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - microservices-network
-    restart: on-failure
+    restart: unless-stopped
+    # Simplified health check for database
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # RabbitMQ Message Queue
   rabbit-queue:
     image: rabbitmq:3-management-alpine
     container_name: rabbit-queue
     environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-guest}
+    ports:
+      - "15672:15672"  # Management UI
     networks:
       - microservices-network
-    restart: on-failure
+    restart: unless-stopped
+    # Keep RabbitMQ health check as it's reliable
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # Inventory Application
   inventory-app:
@@ -50,15 +68,16 @@ services:
     image: inventory-app
     container_name: inventory-app
     environment:
-      - DATABASE_URI=postgresql://postgres:postgres@inventory-db:5432/movies_db
+      - DATABASE_URI=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@inventory-db:5432/${INVENTORY_DB_NAME:-movies_db}
       - HOST=0.0.0.0
-      - PORT=8080
-      - DEBUG=false
+      - PORT=${INVENTORY_APP_PORT:-8080}
+      - DEBUG=${DEBUG:-false}
     depends_on:
-      - inventory-db
+      inventory-db:
+        condition: service_healthy
     networks:
       - microservices-network
-    restart: on-failure
+    restart: unless-stopped
 
   # Billing Application
   billing-app:
@@ -68,21 +87,23 @@ services:
     image: billing-app
     container_name: billing-app
     environment:
-      - DATABASE_URI=postgresql://postgres:postgres@billing-db:5432/billing_db
+      - DATABASE_URI=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@billing-db:5432/${BILLING_DB_NAME:-billing_db}
       - RABBITMQ_HOST=rabbit-queue
       - RABBITMQ_PORT=5672
-      - RABBITMQ_USER=guest
-      - RABBITMQ_PASSWORD=guest
-      - RABBITMQ_QUEUE=billing_queue
+      - RABBITMQ_USER=${RABBITMQ_USER:-guest}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD:-guest}
+      - RABBITMQ_QUEUE=${RABBITMQ_QUEUE:-billing_queue}
       - HOST=0.0.0.0
-      - PORT=8080
-      - DEBUG=false
+      - PORT=${BILLING_APP_PORT:-8080}
+      - DEBUG=${DEBUG:-false}
     depends_on:
-      - billing-db
-      - rabbit-queue
+      billing-db:
+        condition: service_healthy
+      rabbit-queue:
+        condition: service_healthy
     networks:
       - microservices-network
-    restart: on-failure
+    restart: unless-stopped
 
   # API Gateway
   api-gateway-app:
@@ -92,18 +113,18 @@ services:
     image: api-gateway-app
     container_name: api-gateway-app
     environment:
-      - INVENTORY_API_URL=http://inventory-app:8080
-      - BILLING_API_URL=http://billing-app:8080
+      - INVENTORY_API_URL=http://inventory-app:${INVENTORY_APP_PORT:-8080}
+      - BILLING_API_URL=http://billing-app:${BILLING_APP_PORT:-8080}
       - RABBITMQ_HOST=rabbit-queue
       - RABBITMQ_PORT=5672
-      - RABBITMQ_USER=guest
-      - RABBITMQ_PASSWORD=guest
-      - RABBITMQ_QUEUE=billing_queue
+      - RABBITMQ_USER=${RABBITMQ_USER:-guest}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD:-guest}
+      - RABBITMQ_QUEUE=${RABBITMQ_QUEUE:-billing_queue}
       - HOST=0.0.0.0
-      - PORT=3000
-      - DEBUG=false
+      - PORT=${API_GATEWAY_PORT:-3000}
+      - DEBUG=${DEBUG:-false}
     ports:
-      - "3000:3000"
+      - "${EXTERNAL_API_PORT:-3000}:${API_GATEWAY_PORT:-3000}"
     depends_on:
       - inventory-app
       - billing-app
@@ -112,7 +133,7 @@ services:
       - api-gateway-volume:/app/logs
     networks:
       - microservices-network
-    restart: on-failure
+    restart: unless-stopped
 
 volumes:
   inventory-db-volume:
