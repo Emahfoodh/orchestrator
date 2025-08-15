@@ -34,30 +34,41 @@ spec:
             secretKeyRef:
               name: rabbitmq-credentials
               key: rabbitmq-password
+        # Updated health checks with more reasonable settings
         livenessProbe:
           exec:
             command:
-            - rabbitmqctl
-            - ping
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 5
-          failureThreshold: 6
+            - rabbitmq-diagnostics
+            - status
+          initialDelaySeconds: 120  # Wait 2 minutes before first check
+          periodSeconds: 30         # Check every 30 seconds
+          timeoutSeconds: 15        # Wait 15 seconds for response
+          failureThreshold: 5       # Allow 5 failures before restart
         readinessProbe:
           exec:
             command:
-            - rabbitmqctl
+            - rabbitmq-diagnostics
             - ping
-          initialDelaySeconds: 20
-          periodSeconds: 5
-          timeoutSeconds: 10
-          failureThreshold: 6
+          initialDelaySeconds: 30   # Wait 30 seconds before first check
+          periodSeconds: 10         # Check every 10 seconds
+          timeoutSeconds: 10        # Wait 10 seconds for response
+          failureThreshold: 3       # Allow 3 failures before marking unready
+        # Add startup probe to handle slow startup
+        startupProbe:
+          exec:
+            command:
+            - rabbitmq-diagnostics
+            - ping
+          initialDelaySeconds: 10   # Start checking after 10 seconds
+          periodSeconds: 10         # Check every 10 seconds
+          timeoutSeconds: 10        # Wait 10 seconds for response
+          failureThreshold: 18      # Allow up to 3 minutes for startup (18 * 10s)
         resources:
           requests:
             memory: "256Mi"
             cpu: "100m"
           limits:
-            memory: "512Mi"
+            memory: "1Gi"           # Increased memory limit
             cpu: "500m"
 ---
 apiVersion: v1
