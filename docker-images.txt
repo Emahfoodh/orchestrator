@@ -1,0 +1,9 @@
+# Docker Images for Microservices
+inventory-app: emanmahfoodh/inventory-app:latest
+billing-app: emanmahfoodh/billing-app:latest
+api-gateway-app: emanmahfoodh/api-gateway-app:latest
+
+# Tagged versions
+inventory-app: emanmahfoodh/inventory-app:v1.0
+billing-app: emanmahfoodh/billing-app:v1.0
+api-gateway-app: emanmahfoodh/api-gateway-app:v1.0

@@ -385,6 +385,11 @@ docs/_build/
 
 # ==============================================
 # Custom Project Files
+
+# Project-specific additions
+node-token
+.vscode/
+kubeconfig
 # ==============================================
 # Custom ignore patterns for this project
 # Add any project-specific files or directories to ignore
