@@ -4,9 +4,9 @@ metadata:
   name: api-gateway-ingress
   namespace: microservices
   annotations:
-    kubernetes.io/ingress.class: "traefik"
     traefik.ingress.kubernetes.io/router.entrypoints: web
 spec:
+  ingressClassName: traefik
   rules:
   - host: api-gateway.local
     http:

@@ -39,7 +39,7 @@ spec:
               name: database-config
               key: billing-db-name
         - name: DATABASE_URI
-          value: "postgresql://postgres:postgres@billing-db:5432/billing_db"
+          value: "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@billing-db:5432/$(BILLING_DB_NAME)"
         - name: RABBITMQ_HOST
           value: "rabbitmq"
         - name: RABBITMQ_PORT

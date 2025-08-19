@@ -160,6 +160,15 @@ deploy_microservices() {
         print_error "Deployment script not found"
         return 1
     fi
+    
+    # Validate manifests before deployment
+    print_status "Validating Kubernetes manifests..."
+    for manifest in Manifests/*/*.yaml; do
+        if ! kubectl apply --dry-run=client -f "$manifest" > /dev/null 2>&1; then
+            print_warning "Manifest validation warning: $manifest"
+        fi
+    done
+    
     Scripts/deploy-microservices.sh
 }
 
